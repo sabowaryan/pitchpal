@@ -7,31 +7,39 @@ export const APP_VERSION = '1.0.0'
 export const MAX_IDEA_LENGTH = 500
 export const MIN_IDEA_LENGTH = 10
 
-// Tone Configuration
+// Tone Configuration with Professional Icons
 export const TONES = {
   professional: {
     label: 'Professionnel',
     description: 'Ton formel et business pour investisseurs et partenaires',
-    icon: '💼',
-    color: 'blue'
+    icon: 'briefcase',
+    color: 'blue',
+    audience: 'Investisseurs, Business Angels, Partenaires',
+    examples: ['Présentation investisseurs', 'Board meeting', 'Partenariats stratégiques']
   },
   fun: {
     label: 'Fun',
     description: 'Ton décontracté et engageant pour réseaux sociaux',
-    icon: '🎉',
-    color: 'purple'
+    icon: 'sparkles',
+    color: 'purple',
+    audience: 'Réseaux sociaux, Grand public, Community',
+    examples: ['Product Hunt', 'LinkedIn posts', 'Campagnes marketing']
   },
   tech: {
     label: 'Tech',
     description: 'Ton technique et innovant pour équipes de développement',
-    icon: '⚡',
-    color: 'green'
+    icon: 'zap',
+    color: 'green',
+    audience: 'CTOs, Développeurs, Équipes techniques',
+    examples: ['Tech talks', 'Architecture reviews', 'Developer conferences']
   },
   startup: {
     label: 'Startup',
     description: 'Ton disruptif et moderne pour incubateurs et accélérateurs',
-    icon: '🚀',
-    color: 'orange'
+    icon: 'rocket',
+    color: 'orange',
+    audience: 'Incubateurs, Accélérateurs, Écosystème startup',
+    examples: ['Demo days', 'Pitch competitions', 'Startup events']
   }
 } as const
 
