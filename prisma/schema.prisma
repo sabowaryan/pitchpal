@@ -1,0 +1,34 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  pitches   Pitch[]
+}
+
+model Pitch {
+  id                   String     @id @default(cuid())
+  tagline             String
+  problem             String
+  solution            String
+  targetMarket        String
+  businessModel       String
+  competitiveAdvantage String
+  pitchDeck           Json
+  tone                String
+  originalIdea        String
+  userId              String?
+  user                User?      @relation(fields: [userId], references: [id])
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+} 

@@ -1,0 +1,49 @@
+{
+  "name": "pitchpal",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate dev",
+    "db:studio": "prisma studio",
+    "type-check": "tsc --noEmit",
+    "test": "jest",
+    "test:watch": "jest --watch"
+  },
+  "dependencies": {
+    "@prisma/client": "",
+    "@tailwindcss/postcss": "^4.1.11",
+    "@types/bcryptjs": "",
+    "@types/node": "",
+    "@types/react": "",
+    "@types/react-dom": "",
+    "autoprefixer": "",
+    "bcryptjs": "",
+    "class-variance-authority": "",
+    "clsx": "",
+    "lucide-react": "",
+    "next": "",
+    "next-auth": "",
+    "openai": "",
+    "postcss": "",
+    "prisma": "",
+    "puppeteer": "",
+    "react": "",
+    "react-dom": "",
+    "sonner": "",
+    "tailwind-merge": "",
+    "tailwindcss": "",
+    "typescript": ""
+  },
+  "devDependencies": {
+    "@types/jest": "",
+    "eslint": "",
+    "eslint-config-next": "",
+    "jest": "",
+    "jest-environment-jsdom": ""
+  }
+}
