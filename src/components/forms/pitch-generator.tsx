@@ -6,6 +6,7 @@ import { IdeaForm } from './idea-form'
 import { ToneSelector } from './tone-selector'
 import { PitchDisplay } from '../pitch/pitch-display'
 import { Button } from '../ui/button'
+import { AIStatusIndicator } from '../ui/ai-status'
 import { MIN_IDEA_LENGTH } from '@/lib/constants'
 
 export function PitchGenerator() {
@@ -21,6 +22,10 @@ export function PitchGenerator() {
   return (
     <div className="space-y-8">
       <div className="card">
+        <div className="mb-4 pb-4 border-b border-neutral-200">
+          <AIStatusIndicator />
+        </div>
+        
         <IdeaForm 
           value={idea}
           onChange={setIdea}

@@ -11,6 +11,15 @@ export interface Pitch {
   }
   tone: string
   createdAt?: Date
+  generatedBy?: {
+    provider: string
+    model: string
+    usage: {
+      promptTokens: number
+      completionTokens: number
+      totalTokens: number
+    }
+  }
 }
 
 export interface PitchSlide {
