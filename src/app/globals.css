@@ -99,13 +99,13 @@
 
 /* Base Styles */
 * {
-  border-color: theme(colors.neutral.200);
+  border-color: var(--color-neutral-200);
 }
 
 body {
-  background-color: theme(colors.neutral.50);
-  color: theme(colors.neutral.900);
-  font-family: theme(fontFamily.sans);
+  background-color: var(--color-neutral-50);
+  color: var(--color-neutral-900);
+  font-family: var(--font-family-sans);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -125,95 +125,185 @@ h6 { font-size: 1.125rem; }
 
 /* Custom Components */
 .btn {
-  @apply inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-primary-500);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .btn-primary {
-  @apply bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500 shadow-lg hover:shadow-xl;
+  background-color: var(--color-primary-600);
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: var(--color-primary-700);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 .btn-secondary {
-  @apply bg-secondary-100 text-secondary-900 hover:bg-secondary-200 focus:ring-secondary-500;
+  background-color: var(--color-secondary-100);
+  color: var(--color-secondary-900);
+}
+
+.btn-secondary:hover {
+  background-color: var(--color-secondary-200);
 }
 
 .btn-outline {
-  @apply border-2 border-primary-600 text-primary-600 hover:bg-primary-600 hover:text-white focus:ring-primary-500;
+  border: 2px solid var(--color-primary-600);
+  color: var(--color-primary-600);
+}
+
+.btn-outline:hover {
+  background-color: var(--color-primary-600);
+  color: white;
 }
 
 .btn-ghost {
-  @apply text-secondary-700 hover:bg-secondary-100 focus:ring-secondary-500;
+  color: var(--color-secondary-700);
+}
+
+.btn-ghost:hover {
+  background-color: var(--color-secondary-100);
 }
 
 .btn-sm {
-  @apply px-3 py-1.5 text-sm;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
 }
 
 .btn-md {
-  @apply px-4 py-2 text-base;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
 }
 
 .btn-lg {
-  @apply px-6 py-3 text-lg;
+  padding: 0.75rem 1.5rem;
+  font-size: 1.125rem;
 }
 
 .btn-xl {
-  @apply px-8 py-4 text-xl;
+  padding: 1rem 2rem;
+  font-size: 1.25rem;
 }
 
 .card {
-  @apply bg-white rounded-xl shadow-lg border border-neutral-200 transition-all duration-200 hover:shadow-xl;
+  background-color: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--color-neutral-200);
+  transition: all 0.2s;
+}
+
+.card:hover {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
 .card-body {
-  @apply p-6;
+  padding: 1.5rem;
 }
 
 .card-header {
-  @apply p-6 pb-0;
+  padding: 1.5rem 1.5rem 0 1.5rem;
 }
 
 .card-footer {
-  @apply p-6 pt-0;
+  padding: 0 1.5rem 1.5rem 1.5rem;
 }
 
 .section {
-  @apply py-16 lg:py-24;
+  padding: 4rem 0;
+}
+
+@media (min-width: 1024px) {
+  .section {
+    padding: 6rem 0;
+  }
 }
 
 .section-sm {
-  @apply py-12 lg:py-16;
+  padding: 3rem 0;
+}
+
+@media (min-width: 1024px) {
+  .section-sm {
+    padding: 4rem 0;
+  }
 }
 
 .section-lg {
-  @apply py-20 lg:py-32;
+  padding: 5rem 0;
+}
+
+@media (min-width: 1024px) {
+  .section-lg {
+    padding: 8rem 0;
+  }
 }
 
 .container-custom {
-  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  max-width: 80rem;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+@media (min-width: 640px) {
+  .container-custom {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container-custom {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
 }
 
 .gradient-primary {
-  @apply bg-gradient-to-r from-primary-600 to-primary-700;
+  background: linear-gradient(to right, var(--color-primary-600), var(--color-primary-700));
 }
 
 .gradient-secondary {
-  @apply bg-gradient-to-r from-secondary-600 to-secondary-700;
+  background: linear-gradient(to right, var(--color-secondary-600), var(--color-secondary-700));
 }
 
 .gradient-accent {
-  @apply bg-gradient-to-r from-accent-600 to-accent-700;
+  background: linear-gradient(to right, var(--color-accent-600), var(--color-accent-700));
 }
 
 .gradient-hero {
-  @apply bg-gradient-to-br from-primary-50 via-white to-accent-50;
+  background: linear-gradient(to bottom right, var(--color-primary-50), white, var(--color-accent-50));
 }
 
 .text-gradient-primary {
-  @apply bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent;
+  background: linear-gradient(to right, var(--color-primary-600), var(--color-primary-800));
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
 }
 
 .text-gradient-accent {
-  @apply bg-gradient-to-r from-accent-600 to-accent-800 bg-clip-text text-transparent;
+  background: linear-gradient(to right, var(--color-accent-600), var(--color-accent-800));
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
 }
 
 .animate-fade-in {
@@ -229,21 +319,33 @@ h6 { font-size: 1.125rem; }
 }
 
 .hover-lift {
-  @apply transition-transform duration-200 hover:-translate-y-1;
+  transition: transform 0.2s;
+}
+
+.hover-lift:hover {
+  transform: translateY(-0.25rem);
 }
 
 .hover-glow {
-  @apply transition-shadow duration-200 hover:shadow-2xl hover:shadow-primary-500/25;
+  transition: box-shadow 0.2s;
+}
+
+.hover-glow:hover {
+  box-shadow: 0 25px 50px -12px rgba(59, 130, 246, 0.25);
 }
 
 .focus-ring {
-  @apply focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+  outline: none;
+}
+
+.focus-ring:focus {
+  box-shadow: 0 0 0 2px var(--color-primary-500);
 }
 
 /* Custom Scrollbar */
 .scrollbar-thin {
   scrollbar-width: thin;
-  scrollbar-color: theme(colors.neutral.400) theme(colors.neutral.100);
+  scrollbar-color: var(--color-neutral-400) var(--color-neutral-100);
 }
 
 .scrollbar-thin::-webkit-scrollbar {
@@ -251,16 +353,16 @@ h6 { font-size: 1.125rem; }
 }
 
 .scrollbar-thin::-webkit-scrollbar-track {
-  background: theme(colors.neutral.100);
+  background: var(--color-neutral-100);
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  background: theme(colors.neutral.400);
+  background: var(--color-neutral-400);
   border-radius: 3px;
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  background: theme(colors.neutral.500);
+  background: var(--color-neutral-500);
 }
 
 .scrollbar-hidden {
@@ -330,6 +432,6 @@ h6 { font-size: 1.125rem; }
 /* High Contrast Mode */
 @media (prefers-contrast: high) {
   .card {
-    @apply border-2 border-neutral-900;
+    border: 2px solid var(--color-neutral-900);
   }
 }
