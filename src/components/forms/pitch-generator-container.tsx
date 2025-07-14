@@ -9,7 +9,7 @@ import { GenerationProgress } from './generation-progress'
 import { Button } from '../ui/button'
 import { AIStatusIndicator } from '../ui/ai-status'
 import { MIN_IDEA_LENGTH } from '@/lib/constants'
-import { Sparkles, Zap } from 'lucide-react'
+import { Sparkles, Zap, AlertTriangle } from 'lucide-react'
 
 export function PitchGeneratorContainer() {
   const [idea, setIdea] = useState('')
@@ -18,18 +18,34 @@ export function PitchGeneratorContainer() {
   
   const { generatePitch, isLoading, error, progress } = usePitchGenerator({
     onSuccess: (pitch) => {
-      // Redirect to results page with pitch data
-      const encodedPitch = encodeURIComponent(JSON.stringify(pitch))
-      router.push(`/results?data=${encodedPitch}`)
+      try {
+        // Redirect to results page with pitch data
+        const encodedPitch = encodeURIComponent(JSON.stringify(pitch))
+        router.push(`/results?data=${encodedPitch}`)
+      } catch (encodeError) {
+        console.error('Error encoding pitch data:', encodeError)
+        // Fallback: show error message
+        alert('Pitch généré avec succès, mais erreur lors de la redirection. Veuillez réessayer.')
+      }
+    },
+    onError: (errorMessage) => {
+      console.error('Pitch generation failed:', errorMessage)
     }
   })
 
   const handleGenerate = async () => {
-    if (!idea.trim() || idea.length < MIN_IDEA_LENGTH) return
-    await generatePitch(idea, tone)
+    if (!idea?.trim() || idea.trim().length < MIN_IDEA_LENGTH) {
+      return
+    }
+
+    try {
+      await generatePitch(idea.trim(), tone)
+    } catch (err) {
+      console.error('Error in handleGenerate:', err)
+    }
   }
 
-  const isFormValid = idea.trim().length >= MIN_IDEA_LENGTH
+  const isFormValid = idea?.trim()?.length >= MIN_IDEA_LENGTH
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -63,15 +79,21 @@ export function PitchGeneratorContainer() {
           {/* Error Display */}
           {error && (
             <div className="bg-error-50 border-2 border-error-200 rounded-xl p-6 animate-fade-in">
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-error-100 rounded-full flex items-center justify-center">
-                  <span className="text-error-600 text-sm">⚠️</span>
+              <div className="flex items-start space-x-3">
+                <div className="w-8 h-8 bg-error-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <AlertTriangle className="w-4 h-4 text-error-600" />
                 </div>
-                <div>
+                <div className="flex-1">
                   <h4 className="font-semibold text-error-800 mb-1">
                     Erreur de génération
                   </h4>
-                  <p className="text-error-700">{error}</p>
+                  <p className="text-error-700 text-sm leading-relaxed">{error}</p>
+                  <button 
+                    onClick={() => handleGenerate()}
+                    className="mt-3 text-sm text-error-600 hover:text-error-800 underline"
+                  >
+                    Réessayer
+                  </button>
                 </div>
               </div>
             </div>
@@ -105,9 +127,9 @@ export function PitchGeneratorContainer() {
             </Button>
             
             {/* Form Validation Message */}
-            {!isFormValid && idea.length > 0 && (
+            {!isFormValid && idea && idea.length > 0 && (
               <p className="text-sm text-warning-600 mt-2 text-center">
-                Minimum {MIN_IDEA_LENGTH} caractères requis
+                Minimum {MIN_IDEA_LENGTH} caractères requis ({idea.trim().length}/{MIN_IDEA_LENGTH})
               </p>
             )}
           </div>

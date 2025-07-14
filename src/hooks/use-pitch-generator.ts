@@ -31,31 +31,53 @@ export function usePitchGenerator(options: UsePitchGeneratorOptions = {}) {
     ]
 
     let currentStep = 0
+    let progressInterval: NodeJS.Timeout | null = null
     
-    const progressInterval = setInterval(() => {
-      if (currentStep < steps.length) {
-        setProgress({
-          step: steps[currentStep].step,
-          message: steps[currentStep].message,
-          isComplete: false
-        })
-        currentStep++
-      } else {
-        setProgress({
-          step: steps.length,
-          message: 'Pitch généré avec succès !',
-          isComplete: true
-        })
-        clearInterval(progressInterval)
-      }
-    }, 800)
+    const startProgress = () => {
+      progressInterval = setInterval(() => {
+        if (currentStep < steps.length) {
+          setProgress({
+            step: steps[currentStep].step,
+            message: steps[currentStep].message,
+            isComplete: false
+          })
+          currentStep++
+        } else {
+          setProgress({
+            step: steps.length,
+            message: 'Pitch généré avec succès !',
+            isComplete: true
+          })
+          if (progressInterval) {
+            clearInterval(progressInterval)
+            progressInterval = null
+          }
+        }
+      }, 800)
+    }
 
-    return () => clearInterval(progressInterval)
+    startProgress()
+
+    return () => {
+      if (progressInterval) {
+        clearInterval(progressInterval)
+        progressInterval = null
+      }
+    }
   }, [])
 
   const generatePitch = useCallback(async (idea: string, tone: string) => {
-    if (!idea.trim()) {
-      setError('L\'idée ne peut pas être vide')
+    if (!idea?.trim()) {
+      const errorMessage = 'L\'idée ne peut pas être vide'
+      setError(errorMessage)
+      options.onError?.(errorMessage)
+      return
+    }
+
+    if (idea.trim().length < 10) {
+      const errorMessage = 'L\'idée doit contenir au moins 10 caractères'
+      setError(errorMessage)
+      options.onError?.(errorMessage)
       return
     }
 
@@ -67,23 +89,54 @@ export function usePitchGenerator(options: UsePitchGeneratorOptions = {}) {
     const clearProgress = simulateProgress()
     
     try {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 60000) // 60 second timeout
+
       const response = await fetch('/api/generate-pitch', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ idea: idea.trim(), tone }),
+        body: JSON.stringify({ 
+          idea: idea.trim(), 
+          tone: tone || 'professional' 
+        }),
+        signal: controller.signal
       })
 
+      clearTimeout(timeoutId)
+
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.error || `Erreur ${response.status}: ${response.statusText}`)
+        let errorMessage = `Erreur ${response.status}: ${response.statusText}`
+        
+        try {
+          const errorData = await response.json()
+          if (errorData.error) {
+            errorMessage = errorData.error
+          }
+        } catch (parseError) {
+          console.warn('Could not parse error response:', parseError)
+        }
+        
+        throw new Error(errorMessage)
       }
 
       const data = await response.json()
       
-      if (!data.pitch) {
-        throw new Error('Réponse invalide du serveur')
+      if (!data || !data.pitch) {
+        throw new Error('Réponse invalide du serveur - aucun pitch généré')
+      }
+
+      // Validate pitch structure
+      const requiredFields = ['tagline', 'problem', 'solution', 'targetMarket', 'businessModel', 'competitiveAdvantage']
+      for (const field of requiredFields) {
+        if (!data.pitch[field]) {
+          throw new Error(`Pitch incomplet - champ manquant: ${field}`)
+        }
+      }
+
+      if (!data.pitch.pitchDeck || !Array.isArray(data.pitch.pitchDeck.slides) || data.pitch.pitchDeck.slides.length === 0) {
+        throw new Error('Pitch deck invalide ou vide')
       }
 
       // Add metadata to pitch
@@ -92,17 +145,30 @@ export function usePitchGenerator(options: UsePitchGeneratorOptions = {}) {
         id: `pitch_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         createdAt: new Date(),
         originalIdea: idea.trim(),
-        tone
+        tone: tone || 'professional'
       }
 
       setPitch(enrichedPitch)
+      setError(null)
       options.onSuccess?.(enrichedPitch)
       
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Une erreur inattendue est survenue'
+      console.error('Erreur génération pitch:', err)
+      
+      let errorMessage = 'Une erreur inattendue est survenue'
+      
+      if (err instanceof Error) {
+        if (err.name === 'AbortError') {
+          errorMessage = 'La génération a pris trop de temps. Veuillez réessayer.'
+        } else if (err.message.includes('fetch')) {
+          errorMessage = 'Erreur de connexion. Vérifiez votre connexion internet.'
+        } else {
+          errorMessage = err.message
+        }
+      }
+      
       setError(errorMessage)
       options.onError?.(errorMessage)
-      console.error('Erreur génération pitch:', err)
     } finally {
       clearProgress()
       setIsLoading(false)
