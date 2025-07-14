@@ -11,7 +11,7 @@ export class GeminiProvider implements AIProvider {
     }
     
     this.client = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
-    this.model = this.client.getGenerativeModel({ model: 'gemini-pro' })
+    this.model = this.client.getGenerativeModel({ model: 'gemini-2.0-flash' })
   }
 
   async generate(request: GenerateRequest): Promise<GenerateResponse> {
@@ -36,7 +36,7 @@ export class GeminiProvider implements AIProvider {
       return {
         content,
         provider: 'gemini',
-        model: 'gemini-pro',
+        model: 'gemini-2.0-flash',
         usage: {
           promptTokens: response.usageMetadata?.promptTokenCount || 0,
           completionTokens: response.usageMetadata?.candidatesTokenCount || 0,
