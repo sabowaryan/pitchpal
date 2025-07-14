@@ -19,6 +19,7 @@
     "@prisma/client": "",
     "@types/bcryptjs": "",
     "@types/node": "",
+    "@types/puppeteer": "^5.4.7",
     "@types/react": "",
     "@types/react-dom": "",
     "autoprefixer": "^10.4.21",

@@ -1,106 +1,170 @@
 import puppeteer from 'puppeteer'
 import { Pitch } from '@/types/pitch'
+import { generateProfessionalTemplate } from './templates/professional-template'
+import { generateStartupTemplate } from './templates/startup-template'
 
-export async function generatePDF(pitch: Pitch): Promise<Buffer> {
-  const browser = await puppeteer.launch({
-    headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox']
-  })
+export interface PDFOptions {
+  format?: 'A4' | 'Letter'
+  orientation?: 'portrait' | 'landscape'
+  quality?: 'high' | 'medium' | 'low'
+  includeBackground?: boolean
+}
+
+export async function generatePDF(
+  pitch: Pitch, 
+  options: PDFOptions = {}
+): Promise<Buffer> {
+  const {
+    format = 'A4',
+    orientation = 'portrait',
+    quality = 'high',
+    includeBackground = true
+  } = options
+
+  let browser: puppeteer.Browser | null = null
   
-  const page = await browser.newPage()
-  
-  const html = `
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <title>Pitch Deck - ${pitch.tagline}</title>
-        <style>
-          body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            margin: 0; 
-            padding: 0;
-            background: #f8fafc;
-          }
-          .slide { 
-            page-break-after: always; 
-            padding: 40px; 
-            background: white;
-            margin: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-          }
-          .slide:last-child { 
-            page-break-after: avoid; 
-          }
-          h1 { 
-            color: #1d4ed8; 
-            font-size: 2.5em;
-            margin-bottom: 20px;
-            text-align: center;
-          }
-          h2 { 
-            color: #3b82f6; 
-            font-size: 1.8em;
-            margin-bottom: 15px;
-          }
-          .content {
-            font-size: 1.1em;
-            line-height: 1.6;
-            color: #374151;
-          }
-          .tagline {
-            font-size: 1.3em;
-            font-weight: bold;
-            text-align: center;
-            color: #1f2937;
-            margin-bottom: 30px;
-          }
-        </style>
-      </head>
-      <body>
-        <div class="slide">
-          <h1>Pitch Deck</h1>
-          <div class="tagline">${pitch.tagline}</div>
-          <div class="content">
-            <h2>Le Problème</h2>
-            <p>${pitch.problem}</p>
-            
-            <h2>La Solution</h2>
-            <p>${pitch.solution}</p>
-            
-            <h2>Marché Cible</h2>
-            <p>${pitch.targetMarket}</p>
-            
-            <h2>Business Model</h2>
-            <p>${pitch.businessModel}</p>
-            
-            <h2>Avantage Concurrentiel</h2>
-            <p>${pitch.competitiveAdvantage}</p>
-          </div>
-        </div>
-        
-        ${pitch.pitchDeck.slides.map((slide, index) => `
-          <div class="slide">
-            <h1>Slide ${index + 1}: ${slide.title}</h1>
-            <div class="content">${slide.content}</div>
-          </div>
-        `).join('')}
-      </body>
-    </html>
-  `
-  
-  await page.setContent(html)
-  const pdfBuffer = await page.pdf({
-    format: 'A4',
-    printBackground: true,
-    margin: {
-      top: '20mm',
-      right: '20mm',
-      bottom: '20mm',
-      left: '20mm'
+  try {
+    // Launch browser with optimized settings
+    browser = await puppeteer.launch({
+      headless: true,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--no-first-run',
+        '--no-zygote',
+        '--disable-gpu'
+      ]
+    })
+    
+    const page = await browser.newPage()
+    
+    // Set viewport for consistent rendering
+    await page.setViewport({
+      width: format === 'A4' ? 794 : 816, // A4: 794px, Letter: 816px at 96 DPI
+      height: format === 'A4' ? 1123 : 1056,
+      deviceScaleFactor: quality === 'high' ? 2 : 1
+    })
+
+    // Generate HTML template based on tone
+    const html = getTemplateForTone(pitch)
+    
+    // Set content and wait for fonts/images to load
+    await page.setContent(html, {
+      waitUntil: ['networkidle0', 'domcontentloaded'],
+      timeout: 30000
+    })
+
+    // Add custom fonts if needed
+    await page.addStyleTag({
+      url: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap'
+    })
+
+    // Wait a bit more for fonts to load
+    await page.waitForTimeout(2000)
+
+    // Generate PDF with high quality settings
+    const pdfBuffer = await page.pdf({
+      format: format,
+      landscape: orientation === 'landscape',
+      printBackground: includeBackground,
+      preferCSSPageSize: true,
+      displayHeaderFooter: false,
+      margin: {
+        top: '0mm',
+        right: '0mm',
+        bottom: '0mm',
+        left: '0mm'
+      },
+      // High quality settings
+      ...(quality === 'high' && {
+        quality: 100,
+        omitBackground: false,
+      })
+    })
+    
+    return Buffer.from(pdfBuffer)
+    
+  } catch (error) {
+    console.error('PDF generation error:', error)
+    throw new Error(`Erreur lors de la génération PDF: ${error instanceof Error ? error.message : 'Erreur inconnue'}`)
+  } finally {
+    if (browser) {
+      await browser.close()
     }
-  })
+  }
+}
+
+function getTemplateForTone(pitch: Pitch): string {
+  switch (pitch.tone) {
+    case 'startup':
+      return generateStartupTemplate(pitch)
+    case 'professional':
+    case 'tech':
+    case 'fun':
+    default:
+      return generateProfessionalTemplate(pitch)
+  }
+}
+
+// Utility function to estimate PDF size
+export function estimatePDFSize(pitch: Pitch): { pages: number, estimatedSizeMB: number } {
+  const basePages = 3 // Cover + Summary + Market pages
+  const slidePages = pitch.pitchDeck.slides.length
+  const totalPages = basePages + slidePages
   
-  await browser.close()
-  return Buffer.from(pdfBuffer)
-} 
+  // Rough estimation: ~200KB per page for high quality
+  const estimatedSizeMB = (totalPages * 200) / 1024
+  
+  return {
+    pages: totalPages,
+    estimatedSizeMB: Math.round(estimatedSizeMB * 100) / 100
+  }
+}
+
+// Function to generate preview images
+export async function generatePDFPreview(pitch: Pitch): Promise<Buffer[]> {
+  let browser: puppeteer.Browser | null = null
+  
+  try {
+    browser = await puppeteer.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
+    })
+    
+    const page = await browser.newPage()
+    await page.setViewport({ width: 794, height: 1123, deviceScaleFactor: 1 })
+    
+    const html = getTemplateForTone(pitch)
+    await page.setContent(html, { waitUntil: 'networkidle0' })
+    
+    // Generate preview images for first 3 pages
+    const previews: Buffer[] = []
+    const pages = Math.min(3, 3 + pitch.pitchDeck.slides.length)
+    
+    for (let i = 0; i < pages; i++) {
+      const screenshot = await page.screenshot({
+        type: 'png',
+        quality: 80,
+        clip: {
+          x: 0,
+          y: i * 1123,
+          width: 794,
+          height: 1123
+        }
+      })
+      previews.push(Buffer.from(screenshot))
+    }
+    
+    return previews
+    
+  } catch (error) {
+    console.error('Preview generation error:', error)
+    throw new Error('Erreur lors de la génération des aperçus')
+  } finally {
+    if (browser) {
+      await browser.close()
+    }
+  }
+}
