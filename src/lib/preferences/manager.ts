@@ -8,11 +8,11 @@
 import { UserPreferences, PreferencesError, DEFAULT_PREFERENCES } from './types'
 import { loadPreferences as loadRaw, savePreferences as saveRaw } from './storage'
 import { encryptSensitiveArray, decryptSensitiveArray, isEncryptionAvailable } from './encryption'
-import { 
-  migratePreferences, 
-  upgradePreferencesWithEncryption, 
+import {
+  migratePreferences,
+  upgradePreferencesWithEncryption,
   decryptPreferences as decryptPrefs,
-  performMigrationCheck 
+  performMigrationCheck
 } from './migration'
 import { validatePreferences, validatePreferencesForSave } from './validation'
 import { performAutomaticCleanup, initializeAutomaticCleanup } from './cleanup'
@@ -60,7 +60,7 @@ export class PreferencesManager {
 
   constructor(config: Partial<PreferencesManagerConfig> = {}) {
     this.config = { ...DEFAULT_MANAGER_CONFIG, ...config }
-    
+
     if (this.config.autoInitialize) {
       this.initialize().catch(error => {
         console.warn('Failed to auto-initialize preferences manager:', error)
@@ -92,11 +92,11 @@ export class PreferencesManager {
             }
           }
         }
-        
+
         if (migrationResult.migrated) {
           warnings.push('Preferences were migrated from legacy format')
         }
-        
+
         if (migrationResult.upgraded) {
           warnings.push('Preferences were upgraded with encryption')
         }
@@ -145,7 +145,7 @@ export class PreferencesManager {
 
       // Load raw preferences
       const { preferences: rawPreferences, error: loadError } = loadRaw()
-      
+
       if (loadError && loadError.type !== 'storage_unavailable') {
         return {
           success: false,
@@ -181,7 +181,7 @@ export class PreferencesManager {
           // Use sanitized version if validation failed
           preferences = validationResult.sanitized || DEFAULT_PREFERENCES
           warnings.push('Some preferences were invalid and have been reset to defaults')
-          
+
           if (validationResult.warnings) {
             warnings.push(...validationResult.warnings)
           }
@@ -245,11 +245,11 @@ export class PreferencesManager {
             }
           }
         }
-        
+
         if (validationResult.sanitized) {
           processedPreferences = validationResult.sanitized
         }
-        
+
         if (validationResult.warnings) {
           warnings.push(...validationResult.warnings)
         }
@@ -342,7 +342,7 @@ export class PreferencesManager {
       return {
         success: false,
         error: {
-          type: 'validation',
+          type: 'validation_error',
           message: 'Idea cannot be empty'
         }
       }
@@ -356,7 +356,7 @@ export class PreferencesManager {
       }
 
       const preferences = loadResult.data
-      
+
       // Remove duplicate if exists and add to beginning
       const filteredHistory = preferences.ideaHistory.filter(existing => existing !== idea.trim())
       const updatedHistory = [idea.trim(), ...filteredHistory].slice(0, 10) // MAX_IDEA_HISTORY
@@ -384,7 +384,7 @@ export class PreferencesManager {
     try {
       const { forceCleanup } = await import('./cleanup')
       const cleanupResult = await forceCleanup()
-      
+
       if (!cleanupResult.success) {
         return {
           success: false,
@@ -432,7 +432,7 @@ export class PreferencesManager {
 
       const { getStorageInfo } = await import('./storage')
       const { getCleanupInfo } = await import('./cleanup')
-      
+
       const storageInfo = getStorageInfo()
       const cleanupInfo = getCleanupInfo()
 
@@ -465,7 +465,7 @@ export class PreferencesManager {
     try {
       const { clearPreferences } = await import('./storage')
       const clearResult = clearPreferences()
-      
+
       if (!clearResult.success) {
         return {
           success: false,

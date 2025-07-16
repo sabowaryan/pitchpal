@@ -19,7 +19,8 @@ export {
 
 // Encryption utilities
 export {
- 
+  encryptSensitiveData,
+  decryptSensitiveData,
   isEncryptionAvailable,
   encryptSensitiveArray,
   decryptSensitiveArray
@@ -54,7 +55,7 @@ export {
 
 export type {
   UserPreferences,
- 
+  PreferencesError
 } from './types'
 
 export {
