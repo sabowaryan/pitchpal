@@ -29,7 +29,8 @@
   - Écrire les tests unitaires pour le service
   - _Requirements: 1.1, 1.2, 2.1, 2.2, 4.1, 4.2_
 
-- [-] 1.2 Implémenter la compression avec LZ-String
+- [ ] 1.2 Implémenter la compression avec LZ-String
+
 
 
 
