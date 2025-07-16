@@ -1,7 +1,7 @@
 'use client'
 
 import { useSearchParams } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { PitchDisplay } from '@/components/pitch/pitch-display'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { Button } from '@/components/ui/button'
@@ -9,7 +9,8 @@ import { ArrowLeft, Sparkles } from 'lucide-react'
 import Link from 'next/link'
 import { Pitch } from '@/types/pitch'
 
-export default function ResultsPage() {
+// Separate the component that uses useSearchParams
+function ResultsContent() {
   const searchParams = useSearchParams()
   const [pitch, setPitch] = useState<Pitch | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -112,5 +113,21 @@ export default function ResultsPage() {
         </div>
       </main>
     </div>
+  )
+}
+
+// Main component with Suspense boundary
+export default function ResultsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-hero flex items-center justify-center">
+        <div className="text-center">
+          <LoadingSpinner size="lg" />
+          <p className="mt-4 text-neutral-600">Chargement de votre pitch...</p>
+        </div>
+      </div>
+    }>
+      <ResultsContent />
+    </Suspense>
   )
 }

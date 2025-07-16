@@ -35,6 +35,7 @@ export function PitchGeneratorContainer() {
   const [tone, setTone] = useState('professional')
   const [showPreview, setShowPreview] = useState(false)
   const [previewPitch, setPreviewPitch] = useState<Pitch | null>(null)
+  const [isClient, setIsClient] = useState(false)
   const router = useRouter()
   
   // Enhanced pitch generator hook with all new features
@@ -65,13 +66,20 @@ export function PitchGeneratorContainer() {
   // Performance optimization: Debounce idea input for validation
   const debouncedIdea = useDebouncedValue(idea, 300) // 300ms debounce
 
-  // Load user preferences on mount and set initial tone
+  // Client-side hydration check
   useEffect(() => {
-    const preferences = loadPreferences()
-    if (preferences?.defaultTone) {
-      setTone(preferences.defaultTone)
+    setIsClient(true)
+  }, [])
+
+  // Load user preferences on mount and set initial tone (only on client)
+  useEffect(() => {
+    if (isClient) {
+      const preferences = loadPreferences()
+      if (preferences?.defaultTone) {
+        setTone(preferences.defaultTone)
+      }
     }
-  }, [loadPreferences])
+  }, [loadPreferences, isClient])
 
   // Real-time validation with debouncing
   const validationResult = useMemo(() => {
@@ -84,18 +92,20 @@ export function PitchGeneratorContainer() {
       return
     }
 
-    // Save preferences
-    savePreferences({ 
-      defaultTone: tone as any,
-      lastUsed: new Date()
-    })
+    // Save preferences (only on client)
+    if (isClient) {
+      savePreferences({ 
+        defaultTone: tone as any,
+        lastUsed: new Date()
+      })
+    }
 
     try {
       await generatePitch(idea.trim(), tone)
     } catch (err) {
       console.error('Error in handleGenerate:', err)
     }
-  }, [idea, tone, validationResult.isValid, generatePitch, savePreferences])
+  }, [idea, tone, validationResult.isValid, generatePitch, savePreferences, isClient])
 
   // Handle cancellation
   const handleCancel = useCallback(() => {
@@ -250,8 +260,8 @@ export function PitchGeneratorContainer() {
 
       {/* Enhanced Tips Section with User Preferences */}
       <div className="mt-8 space-y-6">
-        {/* Idea History (if available) */}
-        {state.preferences.ideaHistory.length > 0 && (
+        {/* Idea History (if available) - Only show on client */}
+        {isClient && state.preferences.ideaHistory.length > 0 && (
           <div className="card bg-white/60 backdrop-blur-sm border border-white/80 p-6">
             <h3 className="font-semibold text-neutral-900 mb-4 flex items-center space-x-2">
               <Eye className="w-5 h-5" />

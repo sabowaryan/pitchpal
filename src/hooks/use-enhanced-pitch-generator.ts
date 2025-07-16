@@ -15,6 +15,36 @@ import { useFeatureFlags } from './use-feature-flags'
 import { FEATURE_FLAGS } from '@/lib/feature-flags'
 import { recordMonitoringEvent, withPerformanceTracking } from '@/lib/feature-flag-monitoring'
 
+// Safe localStorage utility
+const safeLocalStorage = {
+  getItem: (key: string, defaultValue: any = null) => {
+    if (typeof window === 'undefined') return defaultValue
+    try {
+      const item = localStorage.getItem(key)
+      return item ? JSON.parse(item) : defaultValue
+    } catch (error) {
+      console.error(`Error reading localStorage key "${key}":`, error)
+      return defaultValue
+    }
+  },
+  setItem: (key: string, value: any) => {
+    if (typeof window === 'undefined') return
+    try {
+      localStorage.setItem(key, JSON.stringify(value))
+    } catch (error) {
+      console.error(`Error setting localStorage key "${key}":`, error)
+    }
+  },
+  removeItem: (key: string) => {
+    if (typeof window === 'undefined') return
+    try {
+      localStorage.removeItem(key)
+    } catch (error) {
+      console.error(`Error removing localStorage key "${key}":`, error)
+    }
+  }
+}
+
 // Action types for the reducer
 type GenerationAction =
   | { type: 'GENERATION_START'; payload: { idea: string; tone: string } }
@@ -91,7 +121,6 @@ function generationReducer(state: EnhancedGenerationState, action: GenerationAct
         pitch: action.payload,
         error: null,
         canCancel: false,
-        // Keep retry count for tracking purposes
         progress: {
           ...state.progress,
           step: state.progress.totalSteps,
@@ -202,13 +231,45 @@ export function useEnhancedPitchGenerator(options: UseEnhancedPitchGeneratorOpti
   // Performance optimization: Use cleanup manager for automatic resource management
   const { cleanup, addTimer, addAbortController, removeTimer } = useCleanup()
 
+  // Safe preferences management
+  const loadPreferences = useCallback((): UserPreferences | null => {
+    const defaultPrefs = {
+      defaultTone: 'professional',
+      autoSave: true,
+      showSuggestions: true,
+      enableRetry: true,
+      maxRetryAttempts: 3,
+      ideaHistory: [],
+      lastUsed: new Date()
+    }
+
+    const savedPrefs = safeLocalStorage.getItem('pitchpal_preferences', defaultPrefs)
+    
+    if (savedPrefs) {
+      return {
+        ...defaultPrefs,
+        ...savedPrefs,
+        lastUsed: savedPrefs.lastUsed ? new Date(savedPrefs.lastUsed) : new Date()
+      }
+    }
+    
+    return defaultPrefs
+  }, [])
+
+  const savePreferences = useCallback((prefs: Partial<UserPreferences>) => {
+    const currentPrefs = state.preferences
+    const updatedPrefs = { ...currentPrefs, ...prefs, lastUsed: new Date() }
+    safeLocalStorage.setItem('pitchpal_preferences', updatedPrefs)
+    dispatch({ type: 'PREFERENCES_UPDATE', payload: updatedPrefs })
+  }, [state.preferences])
+
   // Load preferences on mount
   useEffect(() => {
     const savedPreferences = loadPreferences()
     if (savedPreferences) {
       dispatch({ type: 'PREFERENCES_UPDATE', payload: savedPreferences })
     }
-  }, [])
+  }, [loadPreferences])
 
   // Cleanup on unmount - now handled by useCleanup hook
   useEffect(() => {
@@ -349,35 +410,6 @@ export function useEnhancedPitchGenerator(options: UseEnhancedPitchGeneratorOpti
       warnings,
       suggestions
     }
-  }, [])
-
-  // Preferences management
-  const savePreferences = useCallback((prefs: Partial<UserPreferences>) => {
-    try {
-      const currentPrefs = state.preferences
-      const updatedPrefs = { ...currentPrefs, ...prefs, lastUsed: new Date() }
-      localStorage.setItem('pitchpal_preferences', JSON.stringify(updatedPrefs))
-      dispatch({ type: 'PREFERENCES_UPDATE', payload: updatedPrefs })
-    } catch (error) {
-      console.warn('Failed to save preferences:', error)
-    }
-  }, [state.preferences])
-
-  const loadPreferences = useCallback((): UserPreferences | null => {
-    try {
-      const saved = localStorage.getItem('pitchpal_preferences')
-      if (saved) {
-        const parsed = JSON.parse(saved)
-        return {
-          ...initialState.preferences,
-          ...parsed,
-          lastUsed: new Date(parsed.lastUsed || Date.now())
-        }
-      }
-    } catch (error) {
-      console.warn('Failed to load preferences:', error)
-    }
-    return null
   }, [])
 
   // Main generation function with retry logic and feature flag integration
@@ -689,6 +721,23 @@ export function useEnhancedPitchGenerator(options: UseEnhancedPitchGeneratorOpti
     return validation.suggestions
   }, [validateIdea])
 
+  // Additional helper functions for safe storage operations
+  const clearPreferences = useCallback(() => {
+    safeLocalStorage.removeItem('pitchpal_preferences')
+    dispatch({ type: 'PREFERENCES_UPDATE', payload: initialState.preferences })
+  }, [])
+
+  const exportPreferences = useCallback(() => {
+    return safeLocalStorage.getItem('pitchpal_preferences', null)
+  }, [])
+
+  const importPreferences = useCallback((preferences: UserPreferences) => {
+    if (preferences && typeof preferences === 'object') {
+      safeLocalStorage.setItem('pitchpal_preferences', preferences)
+      dispatch({ type: 'PREFERENCES_UPDATE', payload: preferences })
+    }
+  }, [])
+
   return {
     // Actions
     generatePitch,
@@ -705,6 +754,9 @@ export function useEnhancedPitchGenerator(options: UseEnhancedPitchGeneratorOpti
 
     // Preferences
     savePreferences,
-    loadPreferences
+    loadPreferences,
+    clearPreferences,
+    exportPreferences,
+    importPreferences
   }
 }
