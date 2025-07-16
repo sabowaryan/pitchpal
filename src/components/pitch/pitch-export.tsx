@@ -15,10 +15,25 @@ import {
   Settings,
   Sparkles
 } from 'lucide-react'
-import { estimatePDFSize } from '@/lib/pdf/generator'
+// Remove direct import of server-side PDF generator
 
 interface PitchExportProps {
   pitch: Pitch
+}
+
+// Client-side utility function to estimate PDF size
+function estimatePDFSize(pitch: Pitch): { pages: number, estimatedSizeMB: number } {
+  const basePages = 3 // Cover + Summary + Market pages
+  const slidePages = pitch.pitchDeck.slides.length
+  const totalPages = basePages + slidePages
+
+  // Rough estimation: ~200KB per page for high quality
+  const estimatedSizeMB = (totalPages * 200) / 1024
+
+  return {
+    pages: totalPages,
+    estimatedSizeMB: Math.round(estimatedSizeMB * 100) / 100
+  }
 }
 
 export function PitchExport({ pitch }: PitchExportProps) {

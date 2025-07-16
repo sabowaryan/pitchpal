@@ -1,4 +1,5 @@
-import puppeteer from 'puppeteer'
+import * as puppeteer from 'puppeteer'
+
 import { Pitch } from '@/types/pitch'
 import { generateProfessionalTemplate } from './templates/professional-template'
 import { generateStartupTemplate } from './templates/startup-template'
@@ -11,7 +12,7 @@ export interface PDFOptions {
 }
 
 export async function generatePDF(
-  pitch: Pitch, 
+  pitch: Pitch,
   options: PDFOptions = {}
 ): Promise<Buffer> {
   const {
@@ -22,7 +23,7 @@ export async function generatePDF(
   } = options
 
   let browser: puppeteer.Browser | null = null
-  
+
   try {
     // Launch browser with optimized settings
     browser = await puppeteer.launch({
@@ -37,9 +38,9 @@ export async function generatePDF(
         '--disable-gpu'
       ]
     })
-    
+
     const page = await browser.newPage()
-    
+
     // Set viewport for consistent rendering
     await page.setViewport({
       width: format === 'A4' ? 794 : 816, // A4: 794px, Letter: 816px at 96 DPI
@@ -49,7 +50,7 @@ export async function generatePDF(
 
     // Generate HTML template based on tone
     const html = getTemplateForTone(pitch)
-    
+
     // Set content and wait for fonts/images to load
     await page.setContent(html, {
       waitUntil: ['networkidle0', 'domcontentloaded'],
@@ -62,7 +63,8 @@ export async function generatePDF(
     })
 
     // Wait a bit more for fonts to load
-    await page.waitForTimeout(2000)
+    await (page as any).waitForTimeout(2000)
+
 
     // Generate PDF with high quality settings
     const pdfBuffer = await page.pdf({
@@ -83,9 +85,9 @@ export async function generatePDF(
         omitBackground: false,
       })
     })
-    
+
     return Buffer.from(pdfBuffer)
-    
+
   } catch (error) {
     console.error('PDF generation error:', error)
     throw new Error(`Erreur lors de la génération PDF: ${error instanceof Error ? error.message : 'Erreur inconnue'}`)
@@ -113,10 +115,10 @@ export function estimatePDFSize(pitch: Pitch): { pages: number, estimatedSizeMB:
   const basePages = 3 // Cover + Summary + Market pages
   const slidePages = pitch.pitchDeck.slides.length
   const totalPages = basePages + slidePages
-  
+
   // Rough estimation: ~200KB per page for high quality
   const estimatedSizeMB = (totalPages * 200) / 1024
-  
+
   return {
     pages: totalPages,
     estimatedSizeMB: Math.round(estimatedSizeMB * 100) / 100
@@ -126,23 +128,23 @@ export function estimatePDFSize(pitch: Pitch): { pages: number, estimatedSizeMB:
 // Function to generate preview images
 export async function generatePDFPreview(pitch: Pitch): Promise<Buffer[]> {
   let browser: puppeteer.Browser | null = null
-  
+
   try {
     browser = await puppeteer.launch({
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     })
-    
+
     const page = await browser.newPage()
     await page.setViewport({ width: 794, height: 1123, deviceScaleFactor: 1 })
-    
+
     const html = getTemplateForTone(pitch)
     await page.setContent(html, { waitUntil: 'networkidle0' })
-    
+
     // Generate preview images for first 3 pages
     const previews: Buffer[] = []
     const pages = Math.min(3, 3 + pitch.pitchDeck.slides.length)
-    
+
     for (let i = 0; i < pages; i++) {
       const screenshot = await page.screenshot({
         type: 'png',
@@ -156,9 +158,9 @@ export async function generatePDFPreview(pitch: Pitch): Promise<Buffer[]> {
       })
       previews.push(Buffer.from(screenshot))
     }
-    
+
     return previews
-    
+
   } catch (error) {
     console.error('Preview generation error:', error)
     throw new Error('Erreur lors de la génération des aperçus')

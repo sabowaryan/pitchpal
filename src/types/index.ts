@@ -2,6 +2,10 @@
 export * from './pitch'
 export * from './user'
 export * from './api'
+export * from './enhanced-errors'
+
+// Re-export preferences types
+export type { UserPreferences, PreferencesError } from '../lib/preferences/types'
 
 // Common utility types
 export type Optional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>

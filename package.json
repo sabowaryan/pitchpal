@@ -12,11 +12,21 @@
     "db:studio": "prisma studio",
     "type-check": "tsc --noEmit",
     "test": "jest",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "test:e2e": "jest src/__tests__/e2e --runInBand --verbose",
+    "test:e2e:core": "jest src/__tests__/e2e/pitch-generator-e2e.test.tsx --runInBand",
+    "test:e2e:api": "jest src/__tests__/e2e/api-integration.test.ts --runInBand",
+    "test:e2e:performance": "jest src/__tests__/e2e/performance.test.tsx --runInBand",
+    "test:e2e:accessibility": "jest src/__tests__/e2e/accessibility.test.tsx --runInBand",
+    "test:e2e:regression": "jest src/__tests__/e2e/regression.test.tsx --runInBand",
+    "test:e2e:full": "ts-node src/__tests__/e2e/test-runner.ts",
+    "test:coverage": "jest --coverage --collectCoverageFrom='src/**/*.{ts,tsx}' --coverageReporters=text-lcov --coverageReporters=html",
+    "test:ci": "jest --ci --coverage --watchAll=false --passWithNoTests"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "@prisma/client": "",
+    "@testing-library/react": "^16.3.0",
     "@types/bcryptjs": "",
     "@types/node": "",
     "@types/puppeteer": "^5.4.7",
@@ -27,11 +37,12 @@
     "class-variance-authority": "",
     "clsx": "",
     "lucide-react": "",
+    "lz-string": "^1.5.0",
     "next": "",
     "next-auth": "",
     "openai": "",
     "prisma": "",
-    "puppeteer": "",
+    "puppeteer": "^24.12.1",
     "react": "",
     "react-dom": "",
     "sonner": "",
@@ -40,11 +51,16 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.11",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/user-event": "^14.6.1",
     "@types/jest": "",
     "eslint": "",
     "eslint-config-next": "",
     "jest": "",
+    "jest-axe": "^8.0.0",
     "jest-environment-jsdom": "",
-    "tailwindcss": "^4.1.11"
+    "node-mocks-http": "^1.14.1",
+    "tailwindcss": "^4.1.11",
+    "ts-node": "^10.9.2"
   }
 }
